@@ -65,6 +65,10 @@ class RowCursor:
     def fetchall(self):
         return [Row(self._columns, tuple(r)) for r in self._cursor.fetchall()]
 
+    @property
+    def rowcount(self):
+        return self._cursor.rowcount
+
 
 class Conn:
     """Thin wrapper giving sqlite3 and libsql connections an identical,
@@ -165,19 +169,35 @@ def init_db():
             testing TEXT,
             exit_criteria TEXT
         );
+
+        CREATE TABLE IF NOT EXISTS seed_state (
+            key TEXT PRIMARY KEY
+        );
         """
     )
     conn.commit()
 
-    if conn.execute("SELECT COUNT(*) FROM settings").fetchone()[0] == 0:
-        seed_settings(conn)
-    if conn.execute("SELECT COUNT(*) FROM topics").fetchone()[0] == 0:
-        seed_topics(conn)
-    if conn.execute("SELECT COUNT(*) FROM mock_tests").fetchone()[0] == 0:
-        seed_mock_tests(conn)
-    if conn.execute("SELECT COUNT(*) FROM milestones").fetchone()[0] == 0:
-        seed_milestones(conn)
+    _seed_once(conn, "settings", seed_settings)
+    _seed_once(conn, "topics", seed_topics)
+    _seed_once(conn, "mock_tests", seed_mock_tests)
+    _seed_once(conn, "milestones", seed_milestones)
     conn.close()
+
+
+def _seed_once(conn, key, seed_fn):
+    """Atomically claim the right to seed a table exactly once.
+
+    Multiple cold starts can call init_db() concurrently against the same
+    remote DB. A plain "COUNT(*) == 0" check is racy (two instances can both
+    see an empty table and both reseed, clobbering each other). Instead we
+    rely on the PRIMARY KEY constraint on seed_state.key: only one concurrent
+    INSERT OR IGNORE can actually insert the row, so only that caller seeds.
+    """
+    cur = conn.execute("INSERT OR IGNORE INTO seed_state (key) VALUES (?)", (key,))
+    if cur.rowcount == 1:
+        seed_fn(conn)
+    else:
+        conn.commit()
 
 
 def seed_settings(conn):
