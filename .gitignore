@@ -3,3 +3,5 @@ __pycache__/
 *.pyc
 jee_tracker.db
 instance/
+.vercel
+.env*

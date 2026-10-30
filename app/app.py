@@ -1,9 +1,17 @@
-"""JEE + Boards Prep Tracker - a tiny Flask app backed by SQLite.
+"""JEE + Boards Prep Tracker - a tiny Flask app backed by SQLite (or Turso/libSQL
+when deployed, see database.py).
 
 Run with:  python app.py
 Then open http://127.0.0.1:5000
 """
+import sys
 from datetime import date, datetime, timedelta
+from pathlib import Path
+
+# Make sure this file's own directory is importable regardless of how/where
+# it's loaded from (e.g. Vercel imports app/app.py in isolation and does not
+# add its directory to sys.path, which would otherwise break `import database`).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from flask import Flask, redirect, render_template, request, url_for
 

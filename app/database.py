@@ -1,9 +1,15 @@
-"""SQLite data layer for the JEE prep tracker.
+"""Data layer for the JEE prep tracker.
 
-Everything the app needs (topics, mock tests, milestones, settings) lives in a
-single SQLite file (jee_tracker.db) that is created automatically on first run
-and reseeded from seed_data.py whenever the user asks for a reset.
+By default everything lives in a local SQLite file (jee_tracker.db) next to
+the project, created automatically on first run and reseeded from
+seed_data.py whenever the user asks for a reset.
+
+When deployed somewhere with an ephemeral/read-only filesystem (e.g. Vercel
+Functions), set TURSO_DATABASE_URL + TURSO_AUTH_TOKEN env vars to transparently
+switch to a free remote Turso/libSQL database instead, so progress actually
+persists across requests and deployments. See README.md for setup.
 """
+import os
 import sqlite3
 from datetime import date, timedelta
 from pathlib import Path
@@ -11,6 +17,9 @@ from pathlib import Path
 from seed_data import MILESTONES, TOPICS
 
 DB_PATH = Path(__file__).resolve().parent.parent / "jee_tracker.db"
+
+TURSO_DATABASE_URL = os.environ.get("TURSO_DATABASE_URL")
+TURSO_AUTH_TOKEN = os.environ.get("TURSO_AUTH_TOKEN")
 
 DEFAULT_SETTINGS = {
     "current_score": "75",
@@ -22,11 +31,77 @@ DEFAULT_SETTINGS = {
 }
 
 
+class Row:
+    """Mimics sqlite3.Row: supports both row["col"] and row[0] access, plus
+    dict(row), regardless of which backend produced it."""
+
+    __slots__ = ("_columns", "_values")
+
+    def __init__(self, columns, values):
+        self._columns = columns
+        self._values = values
+
+    def __getitem__(self, key):
+        if isinstance(key, str):
+            return self._values[self._columns.index(key)]
+        return self._values[key]
+
+    def keys(self):
+        return list(self._columns)
+
+
+class RowCursor:
+    """Wraps a raw DB-API cursor so fetchone/fetchall always return Row
+    objects, whether the underlying driver is sqlite3 or libsql."""
+
+    def __init__(self, cursor):
+        self._cursor = cursor
+        self._columns = [d[0] for d in cursor.description] if cursor.description else []
+
+    def fetchone(self):
+        row = self._cursor.fetchone()
+        return None if row is None else Row(self._columns, tuple(row))
+
+    def fetchall(self):
+        return [Row(self._columns, tuple(r)) for r in self._cursor.fetchall()]
+
+
+class Conn:
+    """Thin wrapper giving sqlite3 and libsql connections an identical,
+    dict-row-friendly interface."""
+
+    def __init__(self, raw):
+        self._raw = raw
+
+    def execute(self, sql, params=()):
+        return RowCursor(self._raw.execute(sql, params))
+
+    def executemany(self, sql, seq_of_params):
+        self._raw.executemany(sql, seq_of_params)
+
+    def executescript(self, script):
+        # libsql has no executescript(); split on ';' and run each statement.
+        # Safe here since our schema has no semicolons inside string literals.
+        for statement in script.split(";"):
+            statement = statement.strip()
+            if statement:
+                self._raw.execute(statement)
+
+    def commit(self):
+        self._raw.commit()
+
+    def close(self):
+        self._raw.close()
+
+
 def get_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
-    return conn
+    if TURSO_DATABASE_URL:
+        import libsql  # optional dependency, only needed for remote deploys
+
+        raw = libsql.connect(database=TURSO_DATABASE_URL, auth_token=TURSO_AUTH_TOKEN)
+    else:
+        raw = sqlite3.connect(DB_PATH)
+    return Conn(raw)
 
 
 def init_db():
