@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Topic Tracker - JEE Prep Tracker{% endblock %}
+{% block content %}
+
+<h1>Topic Tracker</h1>
+
+<form method="get" class="filters">
+  <select name="class_" onchange="this.form.submit()">
+    <option value="">All classes</option>
+    <option value="Class 11" {{ 'selected' if class_filter == 'Class 11' }}>Class 11</option>
+    <option value="Class 12" {{ 'selected' if class_filter == 'Class 12' }}>Class 12</option>
+  </select>
+  <select name="subject" onchange="this.form.submit()">
+    <option value="">All subjects</option>
+    <option value="Physics" {{ 'selected' if subject_filter == 'Physics' }}>Physics</option>
+    <option value="Chemistry" {{ 'selected' if subject_filter == 'Chemistry' }}>Chemistry</option>
+    <option value="Mathematics" {{ 'selected' if subject_filter == 'Mathematics' }}>Mathematics</option>
+  </select>
+  <select name="priority" onchange="this.form.submit()">
+    <option value="">All priorities</option>
+    {% for p in priority_options %}
+    <option value="{{ p }}" {{ 'selected' if priority_filter == p }}>{{ p }}</option>
+    {% endfor %}
+  </select>
+  <select name="status" onchange="this.form.submit()">
+    <option value="">All statuses</option>
+    {% for s in status_options %}
+    <option value="{{ s }}" {{ 'selected' if status_filter == s }}>{{ s }}</option>
+    {% endfor %}
+  </select>
+  <a href="{{ url_for('topics_list') }}" class="btn small">Clear filters</a>
+</form>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr>
+      <th>Class</th>
+      <th>Subject</th>
+      <th>Topic</th>
+      <th>Status</th>
+      <th>Priority</th>
+      <th>Completion</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for t in topics %}
+    <tr>
+      <td>{{ t.class_ }}</td>
+      <td>{{ t.subject }}</td>
+      <td>
+        <strong>{{ t.topic }}</strong>
+        <div class="muted small">{{ t.subtopics }}</div>
+      </td>
+      <td><span class="badge status-{{ t.theory_status|lower|replace(' ', '-') }}">{{ t.theory_status }}</span></td>
+      <td><span class="badge priority-{{ t.priority|lower }}">{{ t.priority }}</span></td>
+      <td>
+        <div class="progress-bar"><div class="progress-fill" style="width: {{ t.completion }}%"></div></div>
+        <span class="small">{{ t.completion }}%</span>
+      </td>
+      <td><a class="btn small" href="{{ url_for('topic_edit', topic_id=t.id) }}">Edit</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<form method="post" action="{{ url_for('topics_reset') }}" onsubmit="return confirm('Reset ALL topic progress back to defaults? This cannot be undone.');">
+  <button type="submit" class="btn danger">Reset topic tracker</button>
+</form>
+
+{% endblock %}

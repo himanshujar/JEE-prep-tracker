@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Mock Tests - JEE Prep Tracker{% endblock %}
+{% block content %}
+
+<h1>Mock Tests</h1>
+<p class="muted">Log every full mock. Record subject-wise scores and the top error pattern; analyse incorrect AND guessed-correct questions.</p>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Date</th>
+      <th>Type</th>
+      <th>Score / 300</th>
+      <th>Phy</th>
+      <th>Chem</th>
+      <th>Maths</th>
+      <th>Accuracy %</th>
+      <th>Main error pattern</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for m in mocks %}
+    <tr>
+      <td>{{ m.test_num }}</td>
+      <td>{{ m.test_date or '-' }}</td>
+      <td>{{ m.test_type }}</td>
+      <td>{{ m.score if m.score is not none else '-' }}</td>
+      <td>{{ m.physics if m.physics is not none else '-' }}</td>
+      <td>{{ m.chemistry if m.chemistry is not none else '-' }}</td>
+      <td>{{ m.maths if m.maths is not none else '-' }}</td>
+      <td>{{ m.accuracy if m.accuracy is not none else '-' }}</td>
+      <td>{{ m.error_pattern or '-' }}</td>
+      <td><a class="btn small" href="{{ url_for('mock_edit', mock_id=m.id) }}">Edit</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<form method="post" action="{{ url_for('mocks_reset') }}" onsubmit="return confirm('Clear all mock test entries? This cannot be undone.');">
+  <button type="submit" class="btn danger">Reset mock tests</button>
+</form>
+
+{% endblock %}

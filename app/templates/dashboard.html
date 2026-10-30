@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - JEE Prep Tracker{% endblock %}
+{% block content %}
+
+<h1>JEE + Boards Preparation Dashboard</h1>
+
+<section class="card-grid">
+  <div class="card">
+    <h3>Current score</h3>
+    <p class="big">{{ settings.current_score }} / 300</p>
+    <p class="muted">as of {{ settings.current_score_date }}</p>
+  </div>
+  <div class="card">
+    <h3>January target</h3>
+    <p class="big">{{ settings.jan_target }}</p>
+    <p class="muted">
+      {% if countdowns.jan_days_left is not none %}
+        {% if countdowns.jan_days_left >= 0 %}
+          {{ countdowns.jan_days_left }} days left (exam {{ settings.jan_exam_date }})
+        {% else %}
+          Exam date passed ({{ settings.jan_exam_date }})
+        {% endif %}
+      {% else %}
+        Set exam date below
+      {% endif %}
+    </p>
+  </div>
+  <div class="card">
+    <h3>April target</h3>
+    <p class="big">{{ settings.april_target }}</p>
+    <p class="muted">
+      {% if countdowns.april_days_left is not none %}
+        {% if countdowns.april_days_left >= 0 %}
+          {{ countdowns.april_days_left }} days left (exam {{ settings.april_exam_date }})
+        {% else %}
+          Exam date passed ({{ settings.april_exam_date }})
+        {% endif %}
+      {% else %}
+        Set exam date below
+      {% endif %}
+    </p>
+  </div>
+</section>
+
+<section class="card-grid">
+  <div class="card">
+    <h3>Total topics</h3>
+    <p class="big">{{ metrics.total_topics }}</p>
+  </div>
+  <div class="card">
+    <h3>Theory completed</h3>
+    <p class="big">{{ metrics.theory_completed }} / {{ metrics.total_topics }}</p>
+  </div>
+  <div class="card">
+    <h3>Institute sheets done</h3>
+    <p class="big">{{ metrics.sheets_done }} / {{ metrics.total_topics }}</p>
+  </div>
+  <div class="card">
+    <h3>Main PYQs done</h3>
+    <p class="big">{{ metrics.main_pyq_done }}</p>
+  </div>
+  <div class="card">
+    <h3>Advanced PYQs done</h3>
+    <p class="big">{{ metrics.adv_pyq_done }}</p>
+  </div>
+  <div class="card">
+    <h3>Board Qs done</h3>
+    <p class="big">{{ metrics.board_done }}</p>
+  </div>
+  <div class="card">
+    <h3>Avg. completion</h3>
+    <p class="big">{{ metrics.avg_completion }}%</p>
+  </div>
+  <div class="card {{ 'warn' if metrics.high_priority_pending > 0 }}">
+    <h3>High-priority pending</h3>
+    <p class="big">{{ metrics.high_priority_pending }}</p>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Suggested weekly rhythm</h2>
+  <ol>
+    <li>Finish / repair concepts first; don't mark a chapter complete after only watching lectures.</li>
+    <li>For every chapter: institute sheet &rarr; JEE Main PYQs &rarr; Advanced PYQs (where applicable) &rarr; timed mixed practice.</li>
+    <li>Keep an error log: concept gap, formula gap, calculation error, or time-management issue.</li>
+    <li>Take a full mock regularly and analyse it for at least as long as the test.</li>
+  </ol>
+  <p class="muted">150/160 are planning targets, not guaranteed outcomes. Track the mock-test trend and accuracy; use the January attempt as a checkpoint, then strengthen for April.</p>
+</section>
+
+<section class="panel">
+  <h2>Settings</h2>
+  <form method="post" action="{{ url_for('settings_update') }}" class="settings-form">
+    <label>Current score
+      <input type="number" name="current_score" value="{{ settings.current_score }}" min="0" max="300">
+    </label>
+    <label>Current score date
+      <input type="date" name="current_score_date" value="{{ settings.current_score_date }}">
+    </label>
+    <label>January target
+      <input type="number" name="jan_target" value="{{ settings.jan_target }}" min="0" max="300">
+    </label>
+    <label>January exam date
+      <input type="date" name="jan_exam_date" value="{{ settings.jan_exam_date }}">
+    </label>
+    <label>April target
+      <input type="number" name="april_target" value="{{ settings.april_target }}" min="0" max="300">
+    </label>
+    <label>April exam date
+      <input type="date" name="april_exam_date" value="{{ settings.april_exam_date }}">
+    </label>
+    <div class="form-actions">
+      <button type="submit" class="btn primary">Save settings</button>
+    </div>
+  </form>
+  <form method="post" action="{{ url_for('settings_reset') }}" onsubmit="return confirm('Reset settings to defaults?');">
+    <button type="submit" class="btn">Reset settings</button>
+  </form>
+</section>
+
+<section class="panel danger">
+  <h2>Danger zone</h2>
+  <p class="muted">Resets topic progress, mock test scores, milestones and settings back to the original tracker template. This cannot be undone.</p>
+  <form method="post" action="{{ url_for('reset_all') }}" onsubmit="return confirm('This wipes ALL progress (topics, mocks, milestones, settings) and reseeds the original tracker. Continue?');">
+    <button type="submit" class="btn danger">Reset entire tracker</button>
+  </form>
+</section>
+
+{% endblock %}

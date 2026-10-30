@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Milestones - JEE Prep Tracker{% endblock %}
+{% block content %}
+
+<h1>Milestones</h1>
+<p class="muted">The current phase (based on today's date and your exam dates in Settings) is highlighted.</p>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr>
+      <th>Phase</th>
+      <th>Date range</th>
+      <th>Main outcome</th>
+      <th>Physics</th>
+      <th>Chemistry</th>
+      <th>Mathematics</th>
+      <th>Testing / review</th>
+      <th>Exit criteria</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for m in milestones %}
+    <tr class="{{ 'current-phase' if m.is_current }}">
+      <td><strong>{{ m.phase }}</strong>{% if m.is_current %} <span class="badge priority-high">Now</span>{% endif %}</td>
+      <td>{{ m.date_range }}</td>
+      <td>{{ m.outcome }}</td>
+      <td>{{ m.physics }}</td>
+      <td>{{ m.chemistry }}</td>
+      <td>{{ m.maths }}</td>
+      <td>{{ m.testing }}</td>
+      <td>{{ m.exit_criteria }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<form method="post" action="{{ url_for('milestones_reset') }}" onsubmit="return confirm('Reset milestones to the original plan?');">
+  <button type="submit" class="btn danger">Reset milestones</button>
+</form>
+
+{% endblock %}

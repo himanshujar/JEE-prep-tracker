@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Mock Test #{{ mock.test_num }} - JEE Prep Tracker{% endblock %}
+{% block content %}
+
+<a href="{{ url_for('mocks_list') }}" class="back-link">&larr; Back to mock tests</a>
+
+<h1>Mock Test #{{ mock.test_num }}</h1>
+
+<form method="post" action="{{ url_for('mock_update', mock_id=mock.id) }}" class="edit-form">
+  <label>Date
+    <input type="date" name="test_date" value="{{ mock.test_date or '' }}">
+  </label>
+  <label>Test type
+    <input type="text" name="test_type" value="{{ mock.test_type or '' }}">
+  </label>
+  <label>Score / 300
+    <input type="number" name="score" min="0" max="300" value="{{ mock.score if mock.score is not none else '' }}">
+  </label>
+  <label>Physics score
+    <input type="number" name="physics" value="{{ mock.physics if mock.physics is not none else '' }}">
+  </label>
+  <label>Chemistry score
+    <input type="number" name="chemistry" value="{{ mock.chemistry if mock.chemistry is not none else '' }}">
+  </label>
+  <label>Maths score
+    <input type="number" name="maths" value="{{ mock.maths if mock.maths is not none else '' }}">
+  </label>
+  <label>Questions attempted
+    <input type="number" name="attempted" min="0" value="{{ mock.attempted if mock.attempted is not none else '' }}">
+  </label>
+  <label>Correct
+    <input type="number" name="correct" min="0" value="{{ mock.correct if mock.correct is not none else '' }}">
+  </label>
+  <label>Incorrect
+    <input type="number" name="incorrect" min="0" value="{{ mock.incorrect if mock.incorrect is not none else '' }}">
+  </label>
+  <p class="muted small">Accuracy % is calculated automatically from correct/attempted.</p>
+
+  <label class="full-width">Main error pattern
+    <input type="text" name="error_pattern" value="{{ mock.error_pattern or '' }}" placeholder="e.g. silly calculation errors in maths">
+  </label>
+  <label class="full-width">3 actions before next test
+    <textarea name="next_actions" rows="3">{{ mock.next_actions or '' }}</textarea>
+  </label>
+
+  <div class="form-actions">
+    <button type="submit" class="btn primary">Save changes</button>
+    <a href="{{ url_for('mocks_list') }}" class="btn">Cancel</a>
+  </div>
+</form>
+
+{% endblock %}

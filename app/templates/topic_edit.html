@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}{{ topic.topic }} - JEE Prep Tracker{% endblock %}
+{% block content %}
+
+<a href="{{ url_for('topics_list') }}" class="back-link">&larr; Back to topic tracker</a>
+
+<h1>{{ topic.topic }}</h1>
+<p class="muted">{{ topic.class_ }} &middot; {{ topic.subject }}</p>
+<p class="muted">{{ topic.subtopics }}</p>
+<p class="small">
+  JEE Main: <strong>{{ topic.jee_main }}</strong> &nbsp;
+  JEE Advanced: <strong>{{ topic.jee_advanced }}</strong> &nbsp;
+  Boards: <strong>{{ topic.boards }}</strong> &nbsp;
+  Current completion: <strong>{{ topic.completion }}%</strong>
+</p>
+
+<form method="post" action="{{ url_for('topic_update', topic_id=topic.id) }}" class="edit-form">
+  <label>Theory status
+    <select name="theory_status">
+      {% for s in status_options %}
+      <option value="{{ s }}" {{ 'selected' if topic.theory_status == s }}>{{ s }}</option>
+      {% endfor %}
+    </select>
+  </label>
+
+  <label>Priority
+    <select name="priority">
+      {% for p in priority_options %}
+      <option value="{{ p }}" {{ 'selected' if topic.priority == p }}>{{ p }}</option>
+      {% endfor %}
+    </select>
+  </label>
+
+  <label>Concept confidence (1-5)
+    <input type="number" name="concept_confidence" min="1" max="5" value="{{ topic.concept_confidence }}">
+  </label>
+  <label>Formula confidence (1-5)
+    <input type="number" name="formula_confidence" min="1" max="5" value="{{ topic.formula_confidence }}">
+  </label>
+
+  <div class="checkbox-row">
+    <label class="checkbox"><input type="checkbox" name="institute_sheet" {{ 'checked' if topic.institute_sheet }}> Institute sheet done</label>
+    {% if topic.jee_main == 'Yes' %}
+    <label class="checkbox"><input type="checkbox" name="main_pyq" {{ 'checked' if topic.main_pyq }}> JEE Main PYQs done</label>
+    {% endif %}
+    {% if topic.jee_advanced == 'Yes' %}
+    <label class="checkbox"><input type="checkbox" name="adv_pyq" {{ 'checked' if topic.adv_pyq }}> JEE Advanced PYQs done</label>
+    {% endif %}
+    {% if topic.boards == 'Yes' %}
+    <label class="checkbox"><input type="checkbox" name="board_q" {{ 'checked' if topic.board_q }}> Board questions done</label>
+    {% endif %}
+  </div>
+
+  <label>Practice accuracy % (0-100)
+    <input type="number" name="practice_accuracy" min="0" max="100" value="{{ topic.practice_accuracy or '' }}">
+  </label>
+
+  <label>Last studied
+    <input type="date" name="last_studied" value="{{ topic.last_studied or '' }}">
+  </label>
+  <label>Next revision
+    <input type="date" name="next_revision" value="{{ topic.next_revision or '' }}">
+  </label>
+
+  <label class="full-width">Doubts / notes
+    <textarea name="notes" rows="4">{{ topic.notes or '' }}</textarea>
+  </label>
+
+  <div class="form-actions">
+    <button type="submit" class="btn primary">Save changes</button>
+    <a href="{{ url_for('topics_list') }}" class="btn">Cancel</a>
+  </div>
+</form>
+
+{% endblock %}
